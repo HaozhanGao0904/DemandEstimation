@@ -1,0 +1,22 @@
+function [f, rc,q_w] = SN_III_MD(param,var)
+
+%evaluate F_inverse (F is the base distribution, normal)
+rc = norminv(var.v_SN,param(1),param(2));
+q_w = legendre_den(var.v_SN',param(3:end));
+
+exp_x2 = exp(var.p*rc);
+exp_u = exp(bsxfun(@plus, var.delta_hat, var.p*rc));
+exp_u_cumsum = cumsum(exp_u); 
+exp_u_sum1 = exp_u_cumsum(var.cdindex,:);
+exp_u_sum1(2:size(exp_u_sum1,1),:) = diff(exp_u_sum1);
+denom1 = 1 + exp_u_sum1;
+denom = denom1(var.cdid,:);
+
+h_i_tmp = exp_x2./denom;
+h_sim = h_i_tmp*q_w;
+
+h_i_tmp_0 = 1./denom;
+h_sim_0 = h_i_tmp_0*q_w;
+
+g_tmp = var.log_s_s0 - var.delta_hat - log(h_sim./h_sim_0);
+f = sum(g_tmp.^2);
